@@ -1,0 +1,137 @@
+#!/bin/bash
+
+#Donde se guardan las páginas y resultados.
+PAGINAS_EXI="paginas.txt"
+#Se guardan los resultados.
+RESULTADO_EXI="resultado.txt"
+
+#Se crea el archivo.
+if [ ! -f "$PAGINAS_EXI" ]; then
+touch "$PAGINAS_EXI" 
+fi
+
+#Se crea el archivo.
+if [ ! -f "$RESULTADO_EXI" ]; then
+touch "$RESULTADO_EXI" 
+fi
+
+#Se guarda esta página en el archivo.
+if [ ! -s "$PAGINAS_EXI" ]; then
+echo "https://archiveofourown.org/works/52675831" >> "$PAGINAS_EXI"
+fi
+
+opciones=0
+
+#Hace que mientras las opciones no sean 6, se pueda hacer algo dentro del programa.
+while [ "$opciones" != "5" ]
+do
+echo "..."
+echo " → MENU ← "   
+echo "1. Mostrar páginas"
+echo "2. Buscar palabra deseada"
+echo "3. Resultados"
+echo "4. Respaldo y limpieza"
+echo "5. Ingresar página"
+echo "6. Salir"
+echo "--------------------------------------------------"
+#Le lee la opción de número que eligas después de preguntarte.
+echo -n "Elija una opción: "
+read opciones
+
+#El if dice que si eliges el 1, entonces
+if [ "$opciones" -eq 1 ]; then
+echo "Páginas guardadas/existentes"
+if [ -s "$PAGINAS_EXI" ]; then
+#Si no hay ningún error o no esta vacio, te muestra las páginas existentes.
+cat "$PAGINAS_EXI"
+else
+echo "No hay páginas guardadas al momento"
+fi
+fi
+
+#El if dice que si eliges el 2, entonces.
+if [ "$opciones" -eq 2 ]; then
+#Te pide una palabra, y cuando la escribes, se guarda para asì buscarla y decirte cuantas veces esta.
+echo "Escriba la palabra que desea buscar: "
+read PALABRA
+#Si no escribiste ninguna palabra.
+if [ "$PALABRA" = "" ]; then
+#Se te muestra este mensaje.
+echo "Ninguna palabra fue escrita"
+else 
+#Busca la palabra.
+echo "Buscando palabra…\"$PALABRA\"..."
+#Mientras lea el url de donde se encuentre esa palabra, hará:
+while read url
+do
+#Si el url está vacío o no se pudo encontrar lo que se está buscando.
+if [ "$url" != "" ]; then
+echo "Se está revisando $url"
+#Contenido saca la información del url.
+contenido=$(curl -s "$url")
+#Si el contenido está vacío.
+if [ "$contenido" = "" ]; then
+#Si lo que buscaste no se pudo encontrar, o existe, se muestra este mensaje.
+echo "No se pudo encontrar el contenido que busca"
+else 
+#Cantidad usa contenido para así buscar la palabra a buscar y contar.
+#Con el grep se busca la palabra y con el wc se cuenta cuántas veces se encuentra.
+cantidad=$(echo "$contenido" | grep -oi "$PALABRA" | wc -l)
+#La palabra y la cantidad de veces encontrada se guardan en resultados.
+echo "$PALABRA - $url - $cantidad" >> "$RESULTADO_EXI"
+#Aquí te dice cuantas veces se ha encontrado esa palabra.
+echo "La palabra que buscò se ha encontrado $cantidad veces."
+fi 
+fi
+done < "$PAGINAS_EXI"
+echo "Se ha terminado la búsqueda"
+fi 
+fi
+
+#El if hace que si eliges el 3.
+if [ "$opciones" = 3 ]; then
+echo "¿Qué palabra desea ver en los resultados?"
+#Al escribir una palabra 
+read buscar
+if [ "$buscar" = "" ]; then
+echo "No se escribió una palabra"
+else
+#Se busca la palabra en los archivos de resultados.
+echo "Resultados de la busqueda de \"$buscar\"."
+grep -i "$buscar" "$RESULTADO_EXI"
+fi
+fi
+
+#El if hace que si eliges el 4.
+if [ "$opciones" -eq 4 ]; then
+#Calcula la fecha del archivo y la guarda.
+fecha=$(date "+%Y-%m-%d)"
+#Se copian los archivos.
+cp "$PAGINAS_EXI" "paginas_$fecha.txt"
+cp "$RESULTADO_EXI" "resultado_$fecha.txt"
+echo "" > "$PAGINAS_EXI"
+echo "" > "$RESULTADO_EXI"
+echo "Se les hicieron copias con fecha $fecha y se han limpiado los archivos"
+fi
+
+#El if elige que si es el 5, entonces.
+if [ "$opciones" -eq 5 ]; then
+echo "Agregue la página deseada."
+#Le pones la página y te la guarda.
+read agregar
+#Se guarda la página en el archivo.
+echo "$agregar" >> "$PAGINAS_EXI"
+echo "Página fue agregada"
+
+fi
+
+#El if elige que si es el 6, entonces se sale del sistema.
+if [ "$opciones" -eq 6 ]; then 
+echo "Saliendo…"
+echo ".."
+echo "."
+echo ""
+fi 
+
+done
+
